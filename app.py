@@ -1,11 +1,5 @@
 import streamlit as st
-import sys
-import os
-
-# Forzar a Python a encontrar la carpeta 'src'
-sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
-
-from src.main_orchestrator import start_and_return
+from main_orchestrator import start_and_return
 
 st.set_page_config(page_title="Comparador IA", page_icon="🤖", layout="wide")
 
@@ -31,4 +25,4 @@ if st.button("Ejecutar Análisis Multiagente"):
                     st.write(f"**{p['name']}**")
                     st.caption(f"[Ver producto]({p['link']})")
         except Exception as e:
-            st.error(f"Hubo un error en el proceso: {e}")
+            st.error(f"Error: {e}")
