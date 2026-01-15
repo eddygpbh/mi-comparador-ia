@@ -6,14 +6,22 @@ class AnalystAgent:
         try:
             api_key = st.secrets["GEMINI_API_KEY"]
             genai.configure(api_key=api_key)
-            self.model = genai.GenerativeModel('gemini-pro')
+            # Usamos el nombre completo y actualizado del modelo
+            self.model = genai.GenerativeModel('gemini-1.5-flash-latest')
         except Exception as e:
-            st.error(f"Error de API: {e}")
+            st.error(f"Error de configuración: {e}")
 
     def analyze(self, query, products):
         try:
-            prompt = f"Compara brevemente estos productos para {query}: {products}"
+            # Creamos un mensaje simple para probar la conexión
+            prompt = f"El usuario busca {query}. Analiza estos productos y dime cuál es mejor: {products}"
             response = self.model.generate_content(prompt)
             return response.text
         except Exception as e:
-            return f"Error en IA: {e}"
+            # Si falla, intentamos con el nombre alternativo 'gemini-1.5-flash'
+            try:
+                self.model = genai.GenerativeModel('gemini-1.5-flash')
+                response = self.model.generate_content(prompt)
+                return response.text
+            except:
+                return f"Error de modelo (404): {e}. Verifica que tu API Key sea válida para Gemini 1.5."
