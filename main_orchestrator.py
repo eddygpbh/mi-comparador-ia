@@ -1,15 +1,30 @@
-from srbc_agent import SRBCAgent
 from analyst_agent import AnalystAgent
-from database_manager import DatabaseManager
 
 def start_and_return(query):
-    db = DatabaseManager()
-    # Scraper simulado/real
+    # Simulamos búsqueda dinámica basada en lo que escribes
+    # Esto asegura que veas cambios reales en la pantalla
     productos = [
-        {"source": "Mercado Libre", "name": f"{query} Pro", "price": 1200, "link": "#"},
-        {"source": "Amazon", "name": f"{query} Ultra", "price": 1150, "link": "#"}
+        {
+            "source": "MercadoLibre", 
+            "name": f"{query} Versión Pro", 
+            "price": 1500, 
+            "link": "https://mercadolibre.com"
+        },
+        {
+            "source": "Amazon", 
+            "name": f"{query} Edición Económica", 
+            "price": 950, 
+            "link": "https://amazon.com"
+        },
+        {
+            "source": "Tienda Local", 
+            "name": f"{query} Refurbished", 
+            "price": 800, 
+            "link": "#"
+        }
     ]
     
+    # Iniciamos el agente
     analyst = AnalystAgent()
     analisis = analyst.analyze(query, productos)
     
