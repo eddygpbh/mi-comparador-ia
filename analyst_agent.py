@@ -3,18 +3,36 @@ import streamlit as st
 
 class AnalystAgent:
     def __init__(self):
-        # Usamos st.secrets para leer la llave que pusiste en Advanced Settings
         try:
+            # Configurar la API Key desde los secretos
             api_key = st.secrets["GEMINI_API_KEY"]
             genai.configure(api_key=api_key)
-            self.model = genai.GenerativeModel('gemini-1.5-flash')
+            
+            # CAMBIO IMPORTANTE: Usamos 'gemini-pro' que es el modelo estándar y estable
+            self.model = genai.GenerativeModel('gemini-pro')
+            
         except Exception as e:
             st.error(f"Error configurando Gemini: {e}")
 
     def analyze(self, query, products):
         try:
-            prompt = f"Analiza estos productos para {query} y recomienda el mejor: {products}"
+            # Crear un prompt claro para el modelo
+            prompt = f"""
+            Actúa como un experto en compras de tecnología.
+            El usuario busca: "{query}".
+            
+            Aquí están los productos encontrados (simulados o reales):
+            {products}
+            
+            Tarea:
+            1. Analiza cuál es la mejor opción calidad-precio.
+            2. Explica por qué brevemente.
+            3. Si la lista está vacía, da recomendaciones generales para comprar ese producto.
+            
+            Responde en español y sé conciso.
+            """
+            
             response = self.model.generate_content(prompt)
             return response.text
         except Exception as e:
-            return f"Error en el análisis: {e}"
+            return f"Error detallado del modelo: {e}"
