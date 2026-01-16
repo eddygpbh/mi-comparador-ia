@@ -7,25 +7,47 @@ class GeminiConductor:
         try:
             api_key = st.secrets["GEMINI_API_KEY"]
             genai.configure(api_key=api_key)
-            # Usamos el alias más estable del modelo 1.5 Flash
-            self.model = genai.GenerativeModel('gemini-1.5-flash')
+            
+            # Lista de modelos a intentar en orden de preferencia
+            self.modelos_disponibles = [
+                'gemini-1.5-flash', 
+                'gemini-1.5-pro', 
+                'gemini-1.0-pro', 
+                'gemini-pro'
+            ]
+            self.model = None
+            
+            # Intentamos despertar al modelo que esté disponible
+            for nombre_modelo in self.modelos_disponibles:
+                try:
+                    m = genai.GenerativeModel(nombre_modelo)
+                    # Prueba rápida de conexión
+                    m.generate_content("test", generation_config={"max_output_tokens": 1})
+                    self.model = m
+                    self.modelo_activo = nombre_modelo
+                    break
+                except:
+                    continue
+            
+            if not self.model:
+                st.error("No se pudo conectar con ningún modelo de Gemini. Revisa tu API Key.")
         except Exception as e:
             st.error(f"Error de configuración: {e}")
 
     def ejecutar_mision(self, query):
-        # El Conductor ordena buscar
         buscador = SRBCAgent()
         datos_crudos = buscador.search(query)
         
-        # El Conductor analiza y decide
-        contexto = f"Usuario busca: {query}. Datos encontrados: {datos_crudos}"
-        instruccion = "Eres el Conductor. Compara estos productos y da una recomendación final honesta en español."
+        prompt = f"Actúa como el Conductor. Usuario busca: {query}. Hallazgos: {datos_crudos}. Analiza cuál es mejor."
         
         try:
-            response = self.model.generate_content(f"{instruccion}\n\n{contexto}")
-            return datos_crudos, response.text
+            if self.model:
+                response = self.model.generate_content(prompt)
+                return datos_crudos, f"(Modelo usado: {self.modelo_activo})\n\n{response.text}"
+            else:
+                return datos_crudos, "El Conductor no pudo encontrar un cerebro disponible."
         except Exception as e:
-            return datos_crudos, f"Error del Conductor al procesar: {e}"
+            return datos_crudos, f"Fallo crítico en la misión: {e}"
 
 def start_and_return(query):
     conductor = GeminiConductor()
