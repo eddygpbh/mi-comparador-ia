@@ -8,31 +8,32 @@ class GeminiConductor:
             api_key = st.secrets["GEMINI_API_KEY"]
             genai.configure(api_key=api_key)
             
-            # Lista de modelos a intentar en orden de preferencia
-            self.modelos_disponibles = [
-                'gemini-1.5-flash', 
-                'gemini-1.5-pro', 
-                'gemini-1.0-pro', 
-                'gemini-pro'
-            ]
-            self.model = None
+            # DIAGNÓSTICO: Listamos qué modelos ve tu API Key realmente
+            modelos_en_tu_cuenta = []
+            for m in genai.list_models():
+                if 'generateContent' in m.supported_generation_methods:
+                    modelos_en_tu_cuenta.append(m.name.replace('models/', ''))
             
-            # Intentamos despertar al modelo que esté disponible
-            for nombre_modelo in self.modelos_disponibles:
-                try:
-                    m = genai.GenerativeModel(nombre_modelo)
-                    # Prueba rápida de conexión
-                    m.generate_content("test", generation_config={"max_output_tokens": 1})
-                    self.model = m
-                    self.modelo_activo = nombre_modelo
+            # Prioridad de modelos (del más nuevo al más viejo)
+            prioridad = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro', 'gemini-1.0-pro']
+            
+            self.model = None
+            self.modelo_elegido = None
+
+            # Buscamos el mejor modelo disponible que esté en tu cuenta
+            for p in prioridad:
+                if p in modelos_en_tu_cuenta:
+                    self.model = genai.GenerativeModel(p)
+                    self.modelo_elegido = p
                     break
-                except:
-                    continue
             
             if not self.model:
-                st.error("No se pudo conectar con ningún modelo de Gemini. Revisa tu API Key.")
+                # Si no encontramos ninguno en la lista, intentamos el básico por defecto
+                self.model = genai.GenerativeModel('gemini-pro')
+                self.modelo_elegido = 'gemini-pro (default)'
+
         except Exception as e:
-            st.error(f"Error de configuración: {e}")
+            st.error(f"Error de diagnóstico del Conductor: {e}")
 
     def ejecutar_mision(self, query):
         buscador = SRBCAgent()
@@ -41,13 +42,10 @@ class GeminiConductor:
         prompt = f"Actúa como el Conductor. Usuario busca: {query}. Hallazgos: {datos_crudos}. Analiza cuál es mejor."
         
         try:
-            if self.model:
-                response = self.model.generate_content(prompt)
-                return datos_crudos, f"(Modelo usado: {self.modelo_activo})\n\n{response.text}"
-            else:
-                return datos_crudos, "El Conductor no pudo encontrar un cerebro disponible."
+            response = self.model.generate_content(prompt)
+            return datos_crudos, f"✅ **Conductor activo usando:** {self.modelo_elegido}\n\n{response.text}"
         except Exception as e:
-            return datos_crudos, f"Fallo crítico en la misión: {e}"
+            return datos_crudos, f"❌ El modelo {self.modelo_elegido} falló: {e}"
 
 def start_and_return(query):
     conductor = GeminiConductor()
