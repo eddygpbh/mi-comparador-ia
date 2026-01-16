@@ -1,6 +1,7 @@
 import google.generativeai as genai
 import streamlit as st
 from srbc_agent import SRBCAgent
+import time
 
 class GeminiConductor:
     def __init__(self):
@@ -8,58 +9,65 @@ class GeminiConductor:
             api_key = st.secrets["GEMINI_API_KEY"]
             genai.configure(api_key=api_key)
             
-            # --- FASE DE DIAGNÓSTICO ---
-            self.modelos_detectados = []
-            try:
-                # Obtenemos la lista REAL que ve el servidor
-                for m in genai.list_models():
-                    if 'generateContent' in m.supported_generation_methods:
-                        self.modelos_detectados.append(m.name)
-            except Exception as e:
-                st.error(f"Error listando modelos: {e}")
-
-            # Intentamos seleccionar el mejor disponible automáticamente
-            self.model = None
-            self.nombre_modelo_activo = "Ninguno"
-
-            # Buscamos coincidencias en la lista real
-            preferencias = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.0-pro', 'gemini-pro']
+            # --- LISTA DE PRIORIDAD BASADA EN TU CUENTA ---
+            # Priorizamos los modelos 'Flash' que suelen tener cuota gratuita
+            self.prioridad = [
+                'models/gemini-2.0-flash-001',      # Opción 1: Específico y estable
+                'models/gemini-2.0-flash',          # Opción 2: Genérico 2.0
+                'models/gemini-flash-latest',       # Opción 3: Último flash disponible
+                'models/gemini-1.5-flash',          # Opción 4: El clásico 1.5
+                'models/gemini-2.0-flash-lite'      # Opción 5: Versión ligera (casi imposible que falle)
+            ]
             
-            for pref in preferencias:
-                # Buscamos si algún modelo de la lista CONTIENE el nombre preferido
-                match = next((m for m in self.modelos_detectados if pref in m), None)
-                if match:
-                    self.model = genai.GenerativeModel(match)
-                    self.nombre_modelo_activo = match
+            self.model = None
+            self.nombre_modelo = "Buscando..."
+
+            # Lógica de selección quirúrgica
+            available_models = [m.name for m in genai.list_models()]
+            
+            for p in self.prioridad:
+                if p in available_models:
+                    self.model = genai.GenerativeModel(p)
+                    self.nombre_modelo = p
                     break
             
-            # Si aún así falla, probamos el primero que haya en la lista
-            if not self.model and self.modelos_detectados:
-                self.model = genai.GenerativeModel(self.modelos_detectados[0])
-                self.nombre_modelo_activo = self.modelos_detectados[0]
+            # Si no encuentra los de la lista, usa el primero que encuentre en la cuenta (Fallback)
+            if not self.model and available_models:
+                self.model = genai.GenerativeModel(available_models[0])
+                self.nombre_modelo = available_models[0]
 
         except Exception as e:
-            st.error(f"Error crítico de configuración: {e}")
+            st.error(f"Error iniciando sistemas: {e}")
 
     def ejecutar_mision(self, query):
-        # 1. Mostramos al usuario qué modelos ve el sistema (DEBUG)
-        debug_info = f"🔍 **Modelos encontrados en tu cuenta:** {self.modelos_detectados}\n\n"
-        debug_info += f"🚀 **Intentando usar:** {self.nombre_modelo_activo}"
-        
         if not self.model:
-            return [], f"{debug_info}\n\n❌ ERROR: No se pudo iniciar ningún modelo."
+            return [], "❌ Error: No hay modelos disponibles en tu cuenta."
 
-        # 2. Ejecutamos la búsqueda y análisis
+        # Buscador
         buscador = SRBCAgent()
-        datos_crudos = buscador.search(query)
+        datos = buscador.search(query)
         
-        prompt = f"Actúa como el Conductor. Usuario busca: {query}. Hallazgos: {datos_crudos}. Analiza cuál es mejor."
+        # Conductor
+        prompt = f"""
+        Eres el Conductor Inteligente. 
+        Misión: Analizar opciones de compra para '{query}'.
+        Datos encontrados: {datos}
+        
+        Instrucciones:
+        1. Analiza los productos.
+        2. Si los datos son pocos, da consejos generales de experto sobre qué buscar.
+        3. Sé breve y directo.
+        """
         
         try:
+            # Intentamos generar. Si da error 429 (Cuota), avisamos al usuario.
             response = self.model.generate_content(prompt)
-            return datos_crudos, f"{debug_info}\n\n✅ **Respuesta del Conductor:**\n{response.text}"
+            return datos, f"✅ **Conductor operando con:** \n\n{response.text}"
         except Exception as e:
-            return datos_crudos, f"{debug_info}\n\n❌ Error generando contenido: {e}"
+            error_msg = str(e)
+            if "429" in error_msg:
+                return datos, f"⚠️ **Límite de Cuota Alcanzado** en .\nGoogle pide esperar un minuto antes de la siguiente pregunta."
+            return datos, f"❌ Error en el modelo {self.nombre_modelo}: {e}"
 
 def start_and_return(query):
     conductor = GeminiConductor()
