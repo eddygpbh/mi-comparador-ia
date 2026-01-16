@@ -7,26 +7,25 @@ class GeminiConductor:
         try:
             api_key = st.secrets["GEMINI_API_KEY"]
             genai.configure(api_key=api_key)
-            
-            # Forzamos el uso del modelo específico que SI está en v1
-            # El nombre 'gemini-1.5-flash' a veces falla en v1beta, 
-            # pero 'models/gemini-1.5-flash' es la ruta fija.
-            self.model = genai.GenerativeModel('models/gemini-1.5-flash')
+            # Usamos el alias más estable del modelo 1.5 Flash
+            self.model = genai.GenerativeModel('gemini-1.5-flash')
         except Exception as e:
-            st.error(f"Error al despertar al Conductor: {e}")
+            st.error(f"Error de configuración: {e}")
 
     def ejecutar_mision(self, query):
+        # El Conductor ordena buscar
         buscador = SRBCAgent()
         datos_crudos = buscador.search(query)
         
-        prompt = f"Actúa como el Conductor. Usuario busca: {query}. Hallazgos: {datos_crudos}. Analiza cuál es mejor y por qué."
+        # El Conductor analiza y decide
+        contexto = f"Usuario busca: {query}. Datos encontrados: {datos_crudos}"
+        instruccion = "Eres el Conductor. Compara estos productos y da una recomendación final honesta en español."
         
         try:
-            # Forzamos la generación con el modelo configurado
-            response = self.model.generate_content(prompt)
+            response = self.model.generate_content(f"{instruccion}\n\n{contexto}")
             return datos_crudos, response.text
         except Exception as e:
-            return datos_crudos, f"El Conductor tuvo un problema de conexión: {e}"
+            return datos_crudos, f"Error del Conductor al procesar: {e}"
 
 def start_and_return(query):
     conductor = GeminiConductor()
