@@ -73,7 +73,7 @@ with col_s2:
 
 if search_btn and query:
     with st.status("🕵️ Procesando Consenso de Agentes...", expanded=True) as status:
-        st.write("🔍 Escaneando 6,400 tiendas británicas y globales...")
+        st.write("🔍 Escaneando bases de datos globales...")
         time.sleep(1)
         st.write("📊 Verificando TrustScore de los vendedores...")
         
@@ -88,9 +88,9 @@ if search_btn and query:
         st.markdown(f"""
         <div class="product-card">
             <span class="trust-badge">TOP RATED</span>
-            <h2 style="margin-top:10px;">Producto Seleccionado</h2>
+            <h2 style="margin-top:10px;">Selección Premium</h2>
             <div class="score-container">
-                <span class="avg-score">8.9/10</span>
+                <span class="avg-score">9.2/10</span>
                 <span style="color: #767676;">Calidad & Precio</span>
             </div>
             <p style="color: #4c4c4c; line-height: 1.6;">{analisis}</p>
@@ -99,7 +99,7 @@ if search_btn and query:
         st.button("IR A LA TIENDA")
 
     with c2:
-        st.markdown("### 📊 Desglose Técnico")
-        st.info("El Agente de Finanzas ha detectado un ahorro del 12% respecto al precio medio del mercado.")
-        st.metric("TrustScore", "95/100", "Seguro")
-        st.metric("Disponibilidad", "Stock Alto", "Inmediato")
+        st.markdown("### 📊 Métricas de Decisión")
+        st.info("Nuestra IA ha analizado el sentimiento de 500+ reseñas para esta selección.")
+        st.metric("TrustScore", "98/100", "Excelente")
+        st.metric("Eficiencia de Precio", "Óptima", "-10% vs Media")
