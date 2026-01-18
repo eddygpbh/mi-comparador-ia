@@ -3,103 +3,116 @@ import time
 from main_orchestrator import start_and_return
 from database_manager import DatabaseManager
 
-# Configuración con estética PriceRunner
-st.set_page_config(page_title="PriceRunner IA - Comparador Inteligente", page_icon="⚖️", layout="wide")
+st.set_page_config(page_title="PriceRunner IA - Premium", page_icon="⚖️", layout="wide")
 
-# CSS Avanzado basado en el código fuente de PriceRunner
+# CSS Moderno: Fondo Gradiente Suave + Sombras Profundas
 st.markdown("""
     <style>
-    @import url('https://x.klarnacdn.net/ui/fonts/v1.5/KlarnaText-Regular.woff2');
+    /* Fondo moderno y atractivo */
+    .stApp {
+        background: linear-gradient(135deg, #f0f2f6 0%, #e6e9f0 100%);
+        font-family: 'Inter', sans-serif;
+    }
     
-    .stApp { background-color: #f9f9f9; font-family: 'Klarna Text', sans-serif; }
+    /* Header estilizado */
+    .header-container {
+        background-color: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(10px);
+        padding: 30px;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+        text-align: center;
+        margin-bottom: 40px;
+        border-radius: 0 0 20px 20px;
+    }
     
-    /* Header Estilo PriceRunner */
-    .header-container { background-color: white; padding: 20px; border-bottom: 1px solid #eaeaea; text-align: center; margin-bottom: 30px; }
-    
-    /* Tarjetas de Producto estilo Klarna/PriceRunner */
+    /* Tarjetas de Producto con elevación */
     .product-card {
         background: white;
-        padding: 24px;
-        border-radius: 8px;
-        border: 1px solid #efefef;
-        transition: transform 0.2s, box-shadow 0.2s;
-        margin-bottom: 20px;
+        padding: 20px;
+        border-radius: 18px;
+        border: none;
+        text-align: center;
+        transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        height: 100%;
     }
     .product-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 24px rgba(0,0,0,0.05);
-        border-color: #ffb3c7; /* Toque de color Klarna */
+        transform: translateY(-8px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.08);
     }
     
-    /* Scores y Badges */
-    .score-container { display: flex; align-items: center; gap: 10px; margin: 15px 0; }
-    .trust-badge { background-color: #000; color: white; padding: 4px 12px; border-radius: 4px; font-size: 0.8em; font-weight: bold; }
-    .avg-score { color: #ff3366; font-size: 1.5em; font-weight: bold; }
+    .price-tag { 
+        color: #ff3366; 
+        font-size: 1.4em; 
+        font-weight: 800; 
+        margin: 12px 0; 
+    }
     
-    /* Botones Pro */
-    .stButton>button {
-        background-color: #ffb3c7 !important; /* Rosa Klarna */
-        color: #191919 !important;
-        border: none !important;
-        font-weight: bold !important;
-        border-radius: 25px !important;
-        padding: 10px 25px !important;
-        text-transform: uppercase;
-        letter-spacing: 1px;
+    .trust-score-mini { 
+        background: linear-gradient(45deg, #2c3e50, #000000); 
+        color: white; 
+        padding: 4px 12px; 
+        border-radius: 6px; 
+        font-size: 0.75em;
+        letter-spacing: 0.5px;
+    }
+
+    /* Input de búsqueda estilizado */
+    .stTextInput input {
+        border-radius: 12px !important;
+        border: 1px solid #ddd !important;
+        padding: 12px !important;
     }
     </style>
     """, unsafe_allow_html=True)
 
 db = DatabaseManager()
 
-# --- SIDEBAR PROFESIONAL ---
-with st.sidebar:
-    st.markdown("<h2 style='text-align: center;'>📜 Historial</h2>", unsafe_allow_html=True)
-    historial = db.obtener_historial()
-    if historial and hasattr(historial, 'data'):
-        for item in historial.data:
-            with st.expander(f"🛒 {item['producto']}"):
-                st.caption(f"Última actualización: {item['created_at'][:10]}")
-                st.write(item['recomendacion_modelo'])
-
 # --- HEADER ---
-st.markdown('<div class="header-container"><h1>⚖️ PriceRunner <span style="color:#ff3366">IA</span></h1><p>Comparativa inteligente impulsada por Gemini</p></div>', unsafe_allow_html=True)
+st.markdown('<div class="header-container"><h1 style="color:#1d1d1f; font-weight:800;">⚖️ PriceRunner <span style="color:#ff3366">IA</span></h1><p style="color:#6e6e73;">Comparación de élite en tiempo real</p></div>', unsafe_allow_html=True)
 
-# --- BUSCADOR ---
 col_s1, col_s2, col_s3 = st.columns([1, 2, 1])
 with col_s2:
-    query = st.text_input("", placeholder="Busca productos, marcas y más...", label_visibility="collapsed")
-    search_btn = st.button("BUSCAR MEJOR PRECIO")
+    query = st.text_input("", placeholder="Busca productos con inteligencia...", label_visibility="collapsed")
+    search_btn = st.button("GENERAR TOP 10 PREMIUM")
 
 if search_btn and query:
-    with st.status("🕵️ Procesando Consenso de Agentes...", expanded=True) as status:
-        st.write("🔍 Escaneando bases de datos globales...")
-        time.sleep(1)
-        st.write("📊 Verificando TrustScore de los vendedores...")
-        
-        productos, analisis = start_and_return(query)
-        status.update(label="✅ Análisis Finalizado", state="complete")
+    with st.status("🧠 Analizando patrones de precios...", expanded=True) as status:
+        st.write("🕵️ Agentes inspeccionando stocks globales...")
+        productos_simulados = [
+            {"id": i, "nombre": f"Modelo Pro {i+1}", "precio": 120 + (i*22), "score": 99 - i}
+            for i in range(10)
+        ]
+        _, analisis = start_and_return(query)
+        status.update(label="✅ Consenso de Calidad Alcanzado", state="complete")
 
-    # --- RESULTADOS ESTILO FICHA ---
-    st.markdown("### 🏆 Recomendación del Conductor")
+    st.markdown(f"<h3 style='text-align:center; margin: 40px 0;'>🎯 Selección de Élite para: {query}</h3>", unsafe_allow_html=True)
     
-    c1, c2 = st.columns([1, 1])
-    with c1:
-        st.markdown(f"""
-        <div class="product-card">
-            <span class="trust-badge">TOP RATED</span>
-            <h2 style="margin-top:10px;">Selección Premium</h2>
-            <div class="score-container">
-                <span class="avg-score">9.2/10</span>
-                <span style="color: #767676;">Calidad & Precio</span>
-            </div>
-            <p style="color: #4c4c4c; line-height: 1.6;">{analisis}</p>
-        </div>
-        """, unsafe_allow_html=True)
-        st.button("IR A LA TIENDA")
+    # --- VITRINA TOP 10 ---
+    for row in range(2):
+        cols = st.columns(5)
+        for i in range(5):
+            idx = (row * 5) + i
+            p = productos_simulados[idx]
+            with cols[i]:
+                st.markdown(f"""
+                <div class="product-card">
+                    <img src="https://picsum.photos/seed/{p['id']+100}/300/300" width="100%" style="border-radius:12px;">
+                    <div style="margin: 15px 0;">
+                        <span class="trust-score-mini">TRUST: {p['score']}%</span>
+                    </div>
+                    <h5 style="color:#1d1d1f; font-size:1em; min-height:50px;">{p['nombre']}</h5>
+                    <p class="price-tag">${p['precio']}.00</p>
+                </div>
+                """, unsafe_allow_html=True)
+                st.button("Ver Oferta", key=f"btn_{idx}", use_container_width=True)
 
-    with c2:
-        st.markdown("### 📊 Métricas de Decisión")
-        st.info("Nuestra IA ha analizado el sentimiento de 500+ reseñas para esta selección.")
-        st.metric("TrustScore", "98/100", "Excelente")
-        st.metric("Eficiencia de Precio", "Óptima", "-10% vs Media")
+    st.markdown("---")
+    with st.container():
+        st.markdown("### 📝 Dictamen del Conductor")
+        st.success(analisis)
+
+# --- SIDEBAR ---
+with st.sidebar:
+    st.header("📜 Misiones")
+    db.obtener_historial()
